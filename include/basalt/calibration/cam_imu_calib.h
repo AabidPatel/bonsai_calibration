@@ -64,6 +64,15 @@ class CamImuCalib {
               const std::string &cache_path, const std::string &cache_dataset_name, int skip_images,
               const std::vector<double> &imu_noise, bool show_gui = true);
 
+
+  void setOptCamTimeOffset(bool value) {
+      opt_cam_time_offset = value;
+  }
+            
+  void setOptImuScale(bool value) {
+      opt_imu_scale = value;
+  }
+
   ~CamImuCalib();
 
   void initGui();
