@@ -452,6 +452,9 @@ if(NOT BASALT_BUILD_SHARED_LIBRARY_ONLY)
   add_executable(basalt_calibrate_imu src/calibrate_imu.cpp src/calibration/cam_imu_calib.cpp)
   target_link_libraries(basalt_calibrate_imu basalt_internal pangolin basalt::cli11)
 
+  add_executable(calibrate_camera src/camera_calibration.cpp src/calibration/cam_calib.cpp)
+  target_link_libraries(calibrate_cam basalt_internal pangolin basalt::cli11)
+
   add_executable(basalt_vio_sim src/vio_sim.cpp)
   target_link_libraries(basalt_vio_sim basalt_internal pangolin basalt::cli11)
 

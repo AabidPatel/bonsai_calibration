@@ -98,7 +98,7 @@ void CamCalib::initGui() {
 
   pangolin::View &vign_plot_display = pangolin::CreateDisplay().SetBounds(0.0, 0.5, 0.72, 1.0);
 
-  vign_plotter.reset(new pangolin::Plotter(&vign_data_log, 0.0, 1000.0, 0.0, 1.0, 0.01f, 0.01f));
+  if (show_gui) vign_plotter.reset(new pangolin::Plotter(&vign_data_log, 0.0, 1000.0, 0.0, 1.0, 0.01f, 0.01f));
   vign_plot_display.AddDisplay(*vign_plotter);
 
   pangolin::View &polar_error_display =
@@ -192,12 +192,14 @@ void CamCalib::computeVign() {
   for (const auto &v : vign_data) vign_data_log.Log(v);
 
   {
-    vign_plotter->ClearSeries();
-    vign_plotter->ClearMarkers();
+    if (vign_plotter) vign_plotter->ClearSeries();
+    if (vign_plotter) vign_plotter->ClearMarkers();
 
-    for (size_t i = 0; i < calib_opt->calib->intrinsics.size(); i++) {
-      vign_plotter->AddSeries("$i", "$" + std::to_string(2 * i), pangolin::DrawingModeLine, cam_colors[i],
+    if (vign_plotter) {
+      for (size_t i = 0; i < calib_opt->calib->intrinsics.size(); i++) {
+        vign_plotter->AddSeries("$i", "$" + std::to_string(2 * i), pangolin::DrawingModeLine, cam_colors[i],
                               "vignette camera " + std::to_string(i));
+      }
     }
 
     vign_plotter->ScaleViewSmooth(vign_data_log.Samples() / 1000.0f, 1.0f, 0.0f, 0.5f);
@@ -333,8 +335,8 @@ void CamCalib::computeProjections() {
   }
 
   constexpr int MIN_POINTS_HIST = 3;
-  polar_plotter->ClearSeries();
-  azimuth_plotter->ClearSeries();
+  if (polar_plotter) polar_plotter->ClearSeries();
+  if (azimuth_plotter) azimuth_plotter->ClearSeries();
 
   for (size_t c = 0; c < calib_opt->calib->intrinsics.size(); c++) {
     polar_data_log[c]->Clear();
@@ -349,9 +351,11 @@ void CamCalib::computeProjections() {
       }
     }
 
-    polar_plotter->AddSeries("$0", "$1", pangolin::DrawingModeLine, cam_colors[c],
+    if (polar_plotter) {
+      polar_plotter->AddSeries("$0", "$1", pangolin::DrawingModeLine, cam_colors[c],
                              "mean error(pix) vs polar angle(deg) for cam" + std::to_string(c),
                              polar_data_log[c].get());
+    }
 
     for (int i = 0; i < azimuth_sum[c].rows(); i++) {
       if (azimuth_num[c][i] > MIN_POINTS_HIST) {
@@ -362,9 +366,11 @@ void CamCalib::computeProjections() {
       }
     }
 
-    azimuth_plotter->AddSeries("$0", "$1", pangolin::DrawingModeLine, cam_colors[c],
+    if (azimuth_plotter) {
+      azimuth_plotter->AddSeries("$0", "$1", pangolin::DrawingModeLine, cam_colors[c],
                                "mean error(pix) vs azimuth angle(deg) for cam" + std::to_string(c),
                                azimuth_data_log[c].get());
+    }
   }
 }
 
