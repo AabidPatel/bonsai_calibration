@@ -1,8 +1,11 @@
 #!/bin/bash
-
+set -e
 source /opt/ros/humble/setup.bash
 
 aprilgrid_path="/app/calibration_project/basalt/utils/aprilgrid_10x7_pro.json" 
+
+# calib_dir="/big_disk/hawk_calib_recs"
+cd /big_disk/hawk_calib_recs
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 # Note: Ask person Name, Date 
@@ -11,7 +14,7 @@ aprilgrid_path="/app/calibration_project/basalt/utils/aprilgrid_10x7_pro.json"
 
 # Step 1 Converting mcap to euroc
 
-python3 /app/calibration_project/basalt/utils/convert2euroc_hawk_mono.py -r ${1}
+# python3 /app/calibration_project/basalt/utils/convert2euroc_hawk_mono.py -r ${1}
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 #Step 2 Camera Calibration

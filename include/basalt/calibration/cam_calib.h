@@ -98,10 +98,18 @@ class CamCalib {
 
   void setOptIntrinsics(bool opt) { opt_intr = opt; }
 
+  double getStopThresh() const;
+
+  void setStopThresh(double value);
+
+  double getMeanReprojectionError() const;
+
  private:
   static constexpr int UI_WIDTH = 300;
 
   static constexpr size_t RANSAC_THRESHOLD = 10;
+
+  double mean_reprojection_error = 0.0;
 
   // typedef Calibration::Ptr CalibrationPtr;
 

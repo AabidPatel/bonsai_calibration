@@ -124,7 +124,7 @@ class PosesOptimization {
     num_points = lopt.num_points;
     reprojection_error = lopt.reprojection_error;
 
-    std::cout << "[LINEARIZE] Error: " << lopt.error << " num points " << lopt.num_points << std::endl;
+    // std::cout << "[LINEARIZE] Error: " << lopt.error << " num points " << lopt.num_points << std::endl;
 
     lopt.accum.setup_solver();
     Eigen::VectorXd Hdiag = lopt.accum.Hdiagonal();
@@ -168,16 +168,16 @@ class PosesOptimization {
       double step_quality = f_diff / l_diff;
 
       if (step_quality < 0) {
-        std::cout << "\t[REJECTED] lambda:" << lambda << " step_quality: " << step_quality << " max_inc: " << max_inc
-                  << " Error: " << eopt.error << " num points " << eopt.num_points << std::endl;
+        // std::cout << "\t[REJECTED] lambda:" << lambda << " step_quality: " << step_quality << " max_inc: " << max_inc
+                  // << " Error: " << eopt.error << " num points " << eopt.num_points << std::endl;
         lambda = std::min(max_lambda, lambda_vee * lambda);
         lambda_vee *= 2;
 
         timestam_to_pose = timestam_to_pose_backup;
         *calib = calib_backup;
       } else {
-        std::cout << "\t[ACCEPTED] lambda:" << lambda << " step_quality: " << step_quality << " max_inc: " << max_inc
-                  << " Error: " << eopt.error << " num points " << eopt.num_points << std::endl;
+        // std::cout << "\t[ACCEPTED] lambda:" << lambda << " step_quality: " << step_quality << " max_inc: " << max_inc
+                  // << " Error: " << eopt.error << " num points " << eopt.num_points << std::endl;
 
         lambda = std::max(min_lambda, lambda * std::max(1.0 / 3, 1 - std::pow(2 * step_quality - 1, 3.0)));
         lambda_vee = 2;

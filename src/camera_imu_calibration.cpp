@@ -1,6 +1,44 @@
 #include <basalt/optimization/spline_optimize.h>
 #include <basalt/calibration/cam_imu_calib.h>
 #include <CLI/CLI.hpp>
+#include <chrono>
+#include <iostream>
+
+void opt_until_converge(auto& cv, int timeout_seconds = 30, int max_retries = 3) {
+
+  double current_thresh = cv.getStopThresh();
+  std::cout << "Current stop_thresh: " << current_thresh << std::endl;
+  
+  for (int attempt = 1; attempt <= max_retries; ++attempt) {
+      std::cout << "Optimization attempt " << attempt << "...\n";
+      auto start_time = std::chrono::steady_clock::now();
+
+      if (attempt > 2){
+          double desired_thresh = 0.01;
+          cv.setStopThresh(desired_thresh);
+          std::cout << "Setting stop_thresh: " << desired_thresh << "\n";
+      }
+
+      while (true) {
+          auto now = std::chrono::steady_clock::now();
+          auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(now - start_time);
+          std::cout << "Elapsed time: " << elapsed.count() << " seconds\n";
+
+          if (elapsed.count() >= timeout_seconds) {
+              std::cout << "Attempt " << attempt << " timed out after " << timeout_seconds << " seconds.\n";
+              break;
+          }
+
+          bool converged = cv.optimizeWithParam(false);
+          if (converged) {
+              std::cout << "Optimization converged successfully on attempt " << attempt << ".\n";
+              return;  // Exit function on success
+          }
+      }
+    }
+
+  std::cout << "Optimization failed to converge after " << max_retries << " attempts.\n";
+}
 
 int main(int argc, char **argv) {
   std::string dataset_path;
@@ -43,24 +81,12 @@ int main(int argc, char **argv) {
   cv.initCamImuTransform();
   cv.initOptimization();
 
-  bool opt_until_convg = true;
-
-  // double mean_reprojection = cv.getMeanReprojectionError();
-
-  while (opt_until_convg) {
-    	bool converged = cv.optimizeWithParam(true);
-        if (converged) opt_until_convg = false;
-	}
-
+  opt_until_converge(cv);
+  
   cv.setOptCamTimeOffset(true); 
   cv.setOptImuScale(true); 
 
-  opt_until_convg = true;
-
-    while (opt_until_convg) {
-    	bool converged = cv.optimizeWithParam(true);
-        if (converged) opt_until_convg = false;
-	} 
+  opt_until_converge(cv);
 
   cv.saveCalib();
 

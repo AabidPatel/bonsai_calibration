@@ -87,6 +87,18 @@ CamCalib::~CamCalib() {
   }
 }
 
+double CamCalib::getStopThresh() const {
+  return stop_thresh;
+}
+
+void CamCalib::setStopThresh(double value) {
+  stop_thresh = value;
+}
+
+double CamCalib::getMeanReprojectionError() const {
+  return mean_reprojection_error;
+}
+
 void CamCalib::initGui() {
   pangolin::CreateWindowAndBind("Main", 1600, 1000, basalt::vis::default_win_params);
 
@@ -838,13 +850,15 @@ bool CamCalib::optimizeWithParam(bool print_info, std::map<std::string, double> 
       stats->emplace("mean_reprojection_error", reprojection_error / num_points);
     }
 
+    mean_reprojection_error = reprojection_error / num_points;
+
     if (print_info) {
       std::cout << "==================================" << std::endl;
 
-      for (size_t i = 0; i < vio_dataset->get_num_cams(); i++) {
-        std::cout << "intrinsics " << i << ": " << calib_opt->calib->intrinsics[i].getParam().transpose() << std::endl;
-        std::cout << "T_i_c" << i << ":\n" << calib_opt->calib->T_i_c[i].matrix() << std::endl;
-      }
+      // for (size_t i = 0; i < vio_dataset->get_num_cams(); i++) {
+        // std::cout << "intrinsics " << i << ": " << calib_opt->calib->intrinsics[i].getParam().transpose() << std::endl;
+        // std::cout << "T_i_c" << i << ":\n" << calib_opt->calib->T_i_c[i].matrix() << std::endl;
+      // }
 
       std::cout << "Current error: " << error << " num_points " << num_points << " mean_error " << error / num_points
                 << " reprojection_error " << reprojection_error << " mean reprojection "
@@ -854,6 +868,13 @@ bool CamCalib::optimizeWithParam(bool print_info, std::map<std::string, double> 
       if (converged) std::cout << "Optimization Converged !!" << std::endl;
 
       std::cout << "==================================" << std::endl;
+    }
+
+    if (converged) {
+      std::cout << "Current error: " << error << " num_points " << num_points << " mean_error " << error / num_points
+                << " reprojection_error " << reprojection_error << " mean reprojection "
+                << reprojection_error / num_points << " opt_time "
+                << std::chrono::duration_cast<std::chrono::milliseconds>(finish - start).count() << "ms." << std::endl;
     }
 
     if (show_gui) {

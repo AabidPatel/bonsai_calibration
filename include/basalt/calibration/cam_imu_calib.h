@@ -73,6 +73,14 @@ class CamImuCalib {
       opt_imu_scale = value;
   }
 
+  double getStopThresh() const {
+  return stop_thresh;
+}
+
+void setStopThresh(double value) {
+  stop_thresh = value;
+}
+
   ~CamImuCalib();
 
   void initGui();
