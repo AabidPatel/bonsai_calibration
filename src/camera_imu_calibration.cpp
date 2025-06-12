@@ -6,38 +6,59 @@
 
 void opt_until_converge(auto& cv, int timeout_seconds = 30, int max_retries = 3) {
 
-  double current_thresh = cv.getStopThresh();
-  std::cout << "Current stop_thresh: " << current_thresh << std::endl;
+    double current_thresh = cv.getStopThresh();
+    std::cout << "Current Stop Threshold: " << current_thresh << std::endl;
+    
+    for (int attempt = 1; attempt <= max_retries; ++attempt) {
+        std::cout << "Optimization attempt " << attempt << "...\n";
+
+        auto start_time = std::chrono::steady_clock::now();
+
+        if (attempt == 1){
+            double desired_thresh = 1e-08;
+            cv.setStopThresh(desired_thresh);
+            std::cout << "Setting Stop Threshold: " << desired_thresh << "\n";
+        }
+        else if (attempt == 2){
+            double desired_thresh = 5.0e-05;
+            cv.setStopThresh(desired_thresh);
+            std::cout << "Setting Stop Threshold: " << desired_thresh << "\n";
+        }
+        else if (attempt > 2){
+            double desired_thresh = 5.0e-03;
+            cv.setStopThresh(desired_thresh);
+            std::cout << "Setting Stop Threshold: " << desired_thresh << "\n";
+        }
+
+        while (true) {
+            auto now = std::chrono::steady_clock::now();
+            auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(now - start_time);
+            // std::cout << "Elapsed time: " << elapsed.count() << " seconds\n";
   
-  for (int attempt = 1; attempt <= max_retries; ++attempt) {
-      std::cout << "Optimization attempt " << attempt << "...\n";
-      auto start_time = std::chrono::steady_clock::now();
-
-      if (attempt > 2){
-          double desired_thresh = 0.01;
-          cv.setStopThresh(desired_thresh);
-          std::cout << "Setting stop_thresh: " << desired_thresh << "\n";
-      }
-
-      while (true) {
-          auto now = std::chrono::steady_clock::now();
-          auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(now - start_time);
-          std::cout << "Elapsed time: " << elapsed.count() << " seconds\n";
-
-          if (elapsed.count() >= timeout_seconds) {
-              std::cout << "Attempt " << attempt << " timed out after " << timeout_seconds << " seconds.\n";
-              break;
-          }
-
-          bool converged = cv.optimizeWithParam(false);
-          if (converged) {
-              std::cout << "Optimization converged successfully on attempt " << attempt << ".\n";
-              return;  // Exit function on success
-          }
-      }
+            if (elapsed.count() >= timeout_seconds) {
+                std::cout << "Attempt " << attempt << " timed out after " << timeout_seconds << " seconds.\n";
+                break;
+            }
+  
+            bool converged = cv.optimizeWithParam(false);
+            if (converged) {
+                double mean_reproj_error = cv.getMeanReprojectionError();
+                std::cout << "Mean reprojection error: " << mean_reproj_error << "\n";
+                if (mean_reproj_error > 0.12) {
+                    throw std::runtime_error("Mean reprojection error is too high: " + std::to_string(mean_reproj_error));
+                    // std::cout << "Mean reprojection error is too high: " << mean_reproj_error << "\n";
+                    // break;
+                }
+                else {
+                    std::cout << "Optimization converged successfully on attempt " << attempt << ".\n";
+                    return;
+                }
+            }
+        }
+        if (attempt >= max_retries) {
+            std::cout << "Optimization failed to converge after " << max_retries << " attempts.\n";
+        }
     }
-
-  std::cout << "Optimization failed to converge after " << max_retries << " attempts.\n";
 }
 
 int main(int argc, char **argv) {
@@ -75,21 +96,43 @@ int main(int argc, char **argv) {
   basalt::CamImuCalib cv(dataset_path, dataset_type, aprilgrid_path, result_path, cache_dataset_name, skip_images,
                          {accel_noise_std, gyro_noise_std, accel_bias_std, gyro_bias_std}, false);
 
-  cv.loadDataset();
-  cv.detectCorners();
-  cv.initCamPoses();
-  cv.initCamImuTransform();
-  cv.initOptimization();
+  while (true){
+    cv.loadDataset();
+    cv.detectCorners();
+    cv.initCamPoses();
+    cv.initCamImuTransform();
+    cv.initOptimization();
 
-  opt_until_converge(cv);
-  
-  cv.setOptCamTimeOffset(true); 
-  cv.setOptImuScale(true); 
+    try{
+      opt_until_converge(cv);
+    } catch (const std::exception& e) {
+      std::cerr << "Calibration failed: " << e.what() << std::endl;
+      std::cout << "Press 'y' to run calibration again, or 'n' to cancel and record again: ";
+      std::string input;
+      std::getline(std::cin, input);
+      if (input == "y" || input == "Y") {
+        continue; // Run calibration again
+      } else {
+        std::cout << "Calibration cancelled. Please record again." << std::endl;
+        return 1;
+      }
+    }
+    
+    cv.setOptCamTimeOffset(true); 
+    cv.setOptImuScale(true); 
 
-  opt_until_converge(cv);
+    try {
+      opt_until_converge(cv);
+      int64_t cam_time_offset_ns = cv.getCamTimeOffsetNs();
+      std::cout << "Camera time offset (ns): " << cam_time_offset_ns << std::endl;
+    } catch (const std::exception& e) {
+      std::cerr << "Calibration failed: " << e.what() << std::endl;
+      return 1;
+    }
 
-  cv.saveCalib();
+    cv.saveCalib();
 
-  std::cout << "Camera-IMU calibration completed successfully!" << std::endl;
-  return 0;
+    std::cout << "Camera-IMU calibration completed successfully!" << std::endl;
+    return 0;
+  }
 }

@@ -52,6 +52,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <basalt/utils/test_utils.h>
 #include <basalt/utils/vis_utils.h>
 #include <basalt/utils/sophus_utils.hpp>
+#include <basalt/optimization/spline_optimize.h>
 
 namespace basalt {
 
@@ -79,6 +80,14 @@ class CamImuCalib {
 
 void setStopThresh(double value) {
   stop_thresh = value;
+}
+
+double getMeanReprojectionError() const {
+  return mean_reprojection_error;
+}
+
+int64_t getCamTimeOffsetNs() const {
+  return calib_opt ? calib_opt->getCamTimeOffsetNs() : 0;
 }
 
   ~CamImuCalib();
@@ -127,6 +136,8 @@ void setStopThresh(double value) {
 
  private:
   static constexpr int UI_WIDTH = 300;
+
+  double mean_reprojection_error = 0.0;
 
   VioDatasetPtr vio_dataset;
 

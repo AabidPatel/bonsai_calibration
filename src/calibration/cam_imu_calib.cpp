@@ -706,6 +706,8 @@ bool CamImuCalib::optimizeWithParam(bool print_info, std::map<std::string, doubl
       stats->emplace("reprojection_error", reprojection_error);
       stats->emplace("mean_reprojection_error", reprojection_error / num_points);
     }
+    
+    mean_reprojection_error = reprojection_error / num_points;
 
     if (print_info) {
       std::cout << "==================================" << std::endl;

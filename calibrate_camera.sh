@@ -14,7 +14,7 @@ cd /big_disk/hawk_calib_recs
 
 # Step 1 Converting mcap to euroc
 
-# python3 /app/calibration_project/basalt/utils/convert2euroc_hawk_mono.py -r ${1}
+python3 /app/calibration_project/basalt/utils/convert2euroc_hawk_mono.py -r ${1}
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 #Step 2 Camera Calibration
@@ -48,3 +48,8 @@ fi
 
 /app/calibration_project/basalt/build/calibrate_imu --dataset-path $cam_imu_dataset_path --dataset-type euroc --aprilgrid $aprilgrid_path --result-path $cam_imu_result_path
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+# Step 5: Uploading calibration.json to AWS S3 bucket
+
+mv "$cam_imu_result_path/calibration.json" "$cam_imu_result_path/${1}.json"
+aws s3 cp "$cam_imu_result_path/${1}.json" s3://bonsai-remote-assets/cameras/hawk_calibs/
